@@ -102,7 +102,7 @@
 - (BOOL)isSameDayWithDate1:(NSDate*)date1 date2:(NSDate*)date2 {
   NSCalendar* calendar = [NSCalendar currentCalendar];
   
-  unsigned unitFlags = NSYearCalendarUnit | NSMonthCalendarUnit |  NSDayCalendarUnit;
+  unsigned unitFlags = NSCalendarUnitYear | NSCalendarUnitMonth |  NSCalendarUnitDay;
   NSDateComponents *dateComponent1 = [calendar components:unitFlags fromDate:date1];
   NSDateComponents *dateComponent2 = [calendar components:unitFlags fromDate:date2];
   

@@ -1,32 +1,3 @@
-/*
- * Author: Andreas Linde <mail@andreaslinde.de>
- *
- * Copyright (c) 2012-2014 HockeyApp, Bit Stadium GmbH.
- * All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- */
-
-
 #import "BITFeedbackMessage.h"
 #import "BITFeedbackMessageAttachment.h"
 
@@ -58,16 +29,16 @@
 - (id)copyWithZone:(NSZone *)zone {
   BITFeedbackMessage *copy = [[[self class] allocWithZone: zone] init];
   
-  [copy setText: _text];
-  [copy setUserID: _userID];
-  [copy setName: _name];
-  [copy setEmail: _email];
-  [copy setDate: _date];
-  [copy setToken: _token];
-  [copy setMessageID: _messageID];
-  [copy setStatus: _status];
-  [copy setUserMessage: _userMessage];
-  [copy setAttachments: _attachments];
+  [copy setText: self.text];
+  [copy setUserID: self.userID];
+  [copy setName: self.name];
+  [copy setEmail: self.email];
+  [copy setDate: self.date];
+  [copy setToken: self.token];
+  [copy setMessageID: self.messageID];
+  [copy setStatus: self.status];
+  [copy setUserMessage: self.userMessage];
+  [copy setAttachments: self.attachments];
   
   return copy;
 }

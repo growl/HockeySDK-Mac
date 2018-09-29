@@ -1,31 +1,3 @@
-/*
- * Author: Andreas Linde <mail@andreaslinde.de>
- *
- * Copyright (c) 2014 HockeyApp, Bit Stadium GmbH.
- * All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- */
-
 #import "BITFeedbackMessageDateValueTransformer.h"
 
 #import "HockeySDKPrivate.h"
@@ -77,25 +49,28 @@
           [dateComponent1 year]  == [dateComponent2 year]);
 }
 
--(id)transformedValue:(BITFeedbackMessage *)message {
+-(id)transformedValue:(id)message {
   NSString *result = @"";
+  if (!message || ![message isKindOfClass:[BITFeedbackMessage class]]) {
+    return nil;
+  }
+  BITFeedbackMessage *feedbackMessage = (BITFeedbackMessage *)message;
   
-  if (!message) return nil;
-  
-  if (![message isKindOfClass:[BITFeedbackMessage class]]) return nil;
-  
-  if (message.status == BITFeedbackMessageStatusSendPending || message.status == BITFeedbackMessageStatusSendInProgress) {
+  if (feedbackMessage.status == BITFeedbackMessageStatusSendPending ||
+      feedbackMessage.status == BITFeedbackMessageStatusSendInProgress) {
     result = @"Pending";
-  } else if (message.date) {
-    if ([self isSameDayWithDate1:[NSDate date] date2:message.date]) {
-      result = [[self timeFormatter] stringFromDate:message.date];
+  } else if (feedbackMessage.date) {
+    if ([self isSameDayWithDate1:[NSDate date] date2:feedbackMessage.date]) {
+      result = [[self timeFormatter] stringFromDate:feedbackMessage.date];
     } else {
-      result = [NSString stringWithFormat:@"%@ %@", [[self dateFormatter] stringFromDate:message.date], [[self timeFormatter] stringFromDate:message.date]];
+      result = [NSString stringWithFormat:@"%@ %@",
+                [[self dateFormatter] stringFromDate:feedbackMessage.date],
+                [[self timeFormatter] stringFromDate:feedbackMessage.date]];
     }
   }
   
-  if (!message.userMessage && [message.name length] > 0) {
-    result = [NSString stringWithFormat:@"%@ %@ %@", result, BITHockeyLocalizedString(@"FeedbackFrom", @""),  message.name];
+  if (!feedbackMessage.userMessage && [feedbackMessage.name length] > 0) {
+    result = [NSString stringWithFormat:@"%@ %@ %@", result, BITHockeyLocalizedString(@"FeedbackFrom", @""),  feedbackMessage.name];
   }
   
   return result;

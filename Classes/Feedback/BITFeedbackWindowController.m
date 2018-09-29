@@ -1,31 +1,3 @@
-/*
- * Author: Andreas Linde <mail@andreaslinde.de>
- *
- * Copyright (c) 2013-2014 HockeyApp, Bit Stadium GmbH.
- * All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- */
-
 #import "BITFeedbackWindowController.h"
 
 #import "HockeySDK.h"
@@ -45,7 +17,6 @@
 #import "BITSDKTextFieldCell.h"
 
 #import <Quartz/Quartz.h>
-
 
 @interface BITFeedbackWindowController () <NSTableViewDataSource, NSTableViewDelegate, BITSDKTextViewDelegate, QLPreviewPanelDataSource, QLPreviewPanelDelegate, BITFeedbackMessageCellViewDelegate, NSMenuDelegate>
 
@@ -99,7 +70,7 @@
 @property (nonatomic, strong) BITFeedbackMessageAttachment *previewAttachment;
 @property (nonatomic) NSRect previewThumbnailRect;
 
-@property (unsafe_unretained) IBOutlet NSArrayController *composeAttacchmentsArrayController;
+@property (unsafe_unretained) IBOutlet NSArrayController *composeAttachmentsArrayController;
 
 - (BOOL)canContinueUserDataView;
 - (BOOL)canSendMessage;
@@ -110,7 +81,7 @@
 
 @end
 
-NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessageDateValueTransformer";
+static NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessageDateValueTransformer";
 
 @implementation BITFeedbackWindowController
 
@@ -126,9 +97,9 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
     [NSValueTransformer setValueTransformer:[[BITFeedbackMessageDateValueTransformer alloc] init] forName:BITFeedbackMessageDateValueTransformerName];
     
     self.lastUpdateDateFormatter = [[NSDateFormatter alloc] init];
-		[self.lastUpdateDateFormatter setDateStyle:NSDateFormatterShortStyle];
-		[self.lastUpdateDateFormatter setTimeStyle:NSDateFormatterShortStyle];
-		self.lastUpdateDateFormatter.locale = [NSLocale currentLocale];
+    [self.lastUpdateDateFormatter setDateStyle:NSDateFormatterShortStyle];
+    [self.lastUpdateDateFormatter setTimeStyle:NSDateFormatterShortStyle];
+    self.lastUpdateDateFormatter.locale = [NSLocale currentLocale];
   }
   
   return self;
@@ -169,14 +140,15 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
                                                name:BITHockeyFeedbackMessagesLoadingFinished
                                              object:nil];
   
-  [self.composeAttacchmentsArrayController setContent:self.attachments];
+  [self.composeAttachmentsArrayController setContent:self.attachments];
   [self.feedbackAttachmentsTableView setTarget:self];
   [self.feedbackAttachmentsTableView setDoubleAction:@selector(previewAttachment:)];
-  [self.feedbackAttachmentsTableView registerForDraggedTypes:[NSArray arrayWithObject:(NSString*)kUTTypeFileURL]];
+  [self.feedbackAttachmentsTableView registerForDraggedTypes:[NSArray arrayWithObject:(const NSString*)kUTTypeFileURL]];
   [self.feedbackAttachmentsTableView setMenu:[self contextMenuComposeAttachments]];
   
   [self.statusBarRefreshButton setHidden:YES];
-  [self.messageTextField setTypingAttributes:@{NSFontAttributeName: [NSFont userFixedPitchFontOfSize:13.0]}];
+  NSFont *font = [NSFont userFixedPitchFontOfSize:13.0];
+  [self.messageTextField setTypingAttributes:@{NSFontAttributeName: font}];
   [self.messageTextField setBitDelegate:self];
   [self.messageTextField setPlaceHolderString:@"Your Feedback"];
   
@@ -210,9 +182,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   [[NSNotificationCenter defaultCenter] removeObserver:self name:BITHockeyFeedbackMessagesLoadingStarted object:nil];
   [[NSNotificationCenter defaultCenter] removeObserver:self name:BITHockeyFeedbackMessagesLoadingFinished object:nil];
   [[NSNotificationCenter defaultCenter] removeObserver:self name:NSViewFrameDidChangeNotification object:self.feedbackTableView];
-
 }
-
 
 #pragma mark - Context menu for compose attachments
 
@@ -233,11 +203,11 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return menu;
 }
 
-- (void)deleteAttachment:(id)sender {
+- (void)deleteAttachment:(id) __unused sender {
   NSInteger clickedRow = [self.feedbackAttachmentsTableView clickedRow];
   
   [self.attachments removeObjectAtIndex:clickedRow];
-  [self.composeAttacchmentsArrayController setContent:self.attachments];
+  [self.composeAttachmentsArrayController setContent:self.attachments];
   
   if ([self.attachments count] == 0) {
     [self hideComposeAttachments];
@@ -261,8 +231,8 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
 
 - (NSImage *)imageToGreyImage:(NSImage *)image {
   // Create image rectangle with current image width/height
-  CGFloat actualWidth = image.size.width;
-  CGFloat actualHeight = image.size.height;
+  size_t actualWidth = (size_t)image.size.width;
+  size_t actualHeight = (size_t)image.size.height;
   
   CGRect imageRect = CGRectMake(0, 0, actualWidth, actualHeight);
   CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
@@ -311,7 +281,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return newImage;
 }
 
-- (CGImageRef)newImageRefFromImage:(NSImage*)image; {
+- (CGImageRef)newImageRefFromImage:(NSImage*)image {
   NSData * imageData = [image TIFFRepresentation];
   CGImageRef imageRef;
   if(!imageData) return nil;
@@ -349,7 +319,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return result;
 }
 
-- (IBAction)validateUserData:(id)sender {
+- (IBAction)validateUserData:(id) __unused sender {
   [self.manager setUserName:self.userName];
   [self.manager setUserEmail:self.userEmail];
   
@@ -381,18 +351,20 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return self.messageText.length > 0;
 }
 
-- (IBAction)sendMessage:(id)sender {
-  [self.manager submitMessageWithText:[self.messageText string] andAttachments:self.attachments];
+- (IBAction)sendMessage:(id) __unused sender {
+  [self.manager submitMessageWithText:[self.messageText string] andAttachments:[NSArray arrayWithArray:self.attachments]];
   self.messageText = nil;
+  [self.attachments removeAllObjects];
+  [self.composeAttachmentsArrayController setContent:self.attachments];
   [self reloadTableAndScrollToBottom];
 }
 
 - (void)deleteAllMessages {
-  [_manager deleteAllMessages];
+  [self.manager deleteAllMessages];
   [self reloadTableAndScrollToBottom];
 }
 
-- (IBAction)reloadList:(id)sender {
+- (IBAction)reloadList:(id) __unused sender {
   [self startLoadingIndicator];
   [self.manager updateMessagesList];
 }
@@ -438,28 +410,28 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
                     [self.manager lastCheck] ? [self.lastUpdateDateFormatter stringFromDate:[self.manager lastCheck]] : BITHockeyLocalizedString(@"FeedbackLastUpdateNever", @"")];
   
   NSFont *boldFont = [NSFont boldSystemFontOfSize:11];
-
+  
   NSMutableDictionary *style = [NSMutableDictionary dictionary];
-  style[NSFontAttributeName] = boldFont;
+  [style setObject:boldFont forKey:NSFontAttributeName];
   
   NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:text];
   [attributedText beginEditing];
   [attributedText addAttribute:NSFontAttributeName
-                 value:boldFont
-                 range:NSMakeRange(0, 12)];
+                         value:boldFont
+                         range:NSMakeRange(0, 12)];
   [attributedText endEditing];
   
   NSMutableParagraphStyle *paraStyle = [[NSMutableParagraphStyle alloc] init];
   [paraStyle setAlignment:NSCenterTextAlignment];
   [attributedText addAttributes:@{NSParagraphStyleAttributeName: paraStyle} range:NSMakeRange(0, [attributedText length])];
-
+  
   self.statusBarTextField.attributedStringValue = attributedText;
 }
 
 
 #pragma mark - Private
 
-- (void)tableViewFrameChanged:(id)sender {
+- (void)tableViewFrameChanged:(id) __unused sender {
   // this may not be the fastest approach, but don't know of any better at the moment
   [NSAnimationContext beginGrouping];
   [[NSAnimationContext currentContext] setDuration:0];
@@ -490,10 +462,10 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   }
 }
 
-- (void)previewAttachment:(id)sender {
+- (void)previewAttachment:(id) __unused sender {
   NSInteger clickedRow = self.feedbackAttachmentsTableView.clickedRow;
   
-  self.previewAttachment = self.attachments[clickedRow];
+  self.previewAttachment = [self.attachments objectAtIndex:clickedRow];
   
   NSRect thumbnailRect = [self.feedbackAttachmentsTableView frameOfCellAtColumn:0 row:clickedRow];
   self.previewThumbnailRect = thumbnailRect;
@@ -507,15 +479,19 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   if (!error && data) {
     CFStringRef fileExtension = (__bridge CFStringRef)[filename pathExtension];
     CFStringRef UTI = UTTypeCreatePreferredIdentifierForTag(kUTTagClassFilenameExtension, fileExtension, NULL);
-    CFStringRef mimeType = UTTypeCopyPreferredTagWithClass(UTI, kUTTagClassMIMEType);
-    CFRelease(UTI);
-    NSString *mimeTypeString = (__bridge NSString *)mimeType;
+    
+    NSString *mimeTypeString = nil;
+    if (UTI) {
+      CFStringRef mimeType = UTTypeCopyPreferredTagWithClass(UTI, kUTTagClassMIMEType);
+      CFRelease(UTI);
+      mimeTypeString = (__bridge_transfer NSString *)mimeType;
+    }
     
     BITFeedbackMessageAttachment *attachment = [BITFeedbackMessageAttachment attachmentWithData:data contentType:mimeTypeString];
     attachment.originalFilename = filename;
     
     [self.attachments addObject:attachment];
-    [self.composeAttacchmentsArrayController setContent:self.attachments];
+    [self.composeAttachmentsArrayController setContent:self.attachments];
     [self.feedbackAttachmentsTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:[self.attachments count] - 1] byExtendingSelection:NO];
     [self.feedbackAttachmentsTableView scrollRowToVisible:[self.attachments count] - 1];
     
@@ -526,14 +502,14 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
 
 #pragma mark - BITTextViewDelegate
 
-- (void)textView:(BITSDKTextView *)textView dragOperationWithFilename:(NSString *)filename {
+- (void)textView:(BITSDKTextView *) __unused textView dragOperationWithFilename:(NSString *)filename {
   [self addAttachmentWithFilename:filename];
 }
 
 
 #pragma mark - Table view data source
 
-- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation {
+- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation) __unused operation {
   
   if (aTableView == self.feedbackAttachmentsTableView) {
     if (row < aTableView.numberOfRows) return NO;
@@ -551,7 +527,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return NSDragOperationNone;
 }
 
-- (BOOL)tableView:(NSTableView *)aTableView acceptDrop:(id < NSDraggingInfo >)info row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation {
+- (BOOL)tableView:(NSTableView *)aTableView acceptDrop:(id < NSDraggingInfo >)info row:(NSInteger)row dropOperation:(NSTableViewDropOperation) __unused operation {
   
   if (aTableView == self.feedbackAttachmentsTableView) {
     if (row < aTableView.numberOfRows) return NO;
@@ -580,8 +556,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return NO;
 }
 
-
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
+- (NSInteger)numberOfRowsInTableView:(NSTableView *) __unused aTableView {
   return [self.manager numberOfMessages];
 }
 
@@ -592,7 +567,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return height;
 }
 
-- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
+- (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *) __unused tableColumn row:(NSInteger)row {
   BITFeedbackMessageCellView *result = [tableView makeViewWithIdentifier:[BITFeedbackMessageCellView identifier] owner:self];
   
   BITFeedbackMessage *message = [self.manager messageAtIndex:row];
@@ -604,39 +579,31 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   
   result.message = message;
   [result updateAttachmentViews];
-
+  
   for (BITFeedbackMessageAttachment *attachment in message.attachments) {
     if (attachment.needsLoadingFromURL && !attachment.isLoading){
       attachment.isLoading = YES;
-      NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:attachment.sourceURL]];
+      NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:(NSURL *)[NSURL URLWithString:attachment.sourceURL]];
       __weak typeof (self) weakSelf = self;
-      id nsurlsessionClass = NSClassFromString(@"NSURLSessionDataTask");
-      if (nsurlsessionClass) {
-        NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
-        NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
-        
-        NSURLSessionDataTask *task = [session dataTaskWithRequest:request
-                                                completionHandler: ^(NSData *data, NSURLResponse *response, NSError *error) {
-                                                  typeof (self) strongSelf = weakSelf;
-                                                  [strongSelf handleResponseForAttachment:attachment responseData:data error:error];
-                                                }];
-        [task resume];
-      }else{
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        [NSURLConnection sendAsynchronousRequest:request queue:self.thumbnailQueue completionHandler:^(NSURLResponse *response, NSData *responseData, NSError *err) {
-#pragma clang diagnostic pop
-          typeof (self) strongSelf = weakSelf;
-          [strongSelf handleResponseForAttachment:attachment responseData:responseData error:err];
-        }];
-      }
+      NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+      __block NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
+      
+      NSURLSessionDataTask *task = [session dataTaskWithRequest:request
+                                              completionHandler: ^(NSData *data, NSURLResponse * __unused response, NSError *error) {
+                                                typeof (self) strongSelf = weakSelf;
+                                                
+                                                [session finishTasksAndInvalidate];
+                                                
+                                                [strongSelf handleResponseForAttachment:attachment responseData:data error:error];
+                                              }];
+      [task resume];
     }
   }
   
   return result;
 }
 
-- (void)handleResponseForAttachment:(BITFeedbackMessageAttachment *)attachment responseData:(NSData *)responseData error:(NSError *)error {
+- (void)handleResponseForAttachment:(BITFeedbackMessageAttachment *)attachment responseData:(NSData *)responseData error:(NSError *) __unused error {
   attachment.isLoading = NO;
   if (responseData.length) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -649,22 +616,22 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
 
 #pragma mark - NSSplitView Delegate
 
-- (CGFloat)splitView:(NSSplitView *)splitView constrainMaxCoordinate:(CGFloat)proposedMax ofSubviewAt:(NSInteger)dividerIndex {
+- (CGFloat)splitView:(NSSplitView *)splitView constrainMaxCoordinate:(CGFloat) __unused proposedMax ofSubviewAt:(NSInteger) __unused dividerIndex {
   CGFloat maximumSize = splitView.frame.size.height - 50;
   
   return maximumSize;
 }
 
-- (CGFloat)splitView:(NSSplitView *)splitView constrainMinCoordinate:(CGFloat)proposedMin ofSubviewAt:(NSInteger)dividerIndex {
+- (CGFloat)splitView:(NSSplitView *)splitView constrainMinCoordinate:(CGFloat) __unused proposedMin ofSubviewAt:(NSInteger) __unused dividerIndex {
   CGFloat minimumSize = splitView.frame.size.height - 300;
   
   return minimumSize;
 }
 
-- (void)splitView:(NSSplitView *)sender resizeSubviewsWithOldSize:(NSSize)oldSize {
+- (void)splitView:(NSSplitView *)sender resizeSubviewsWithOldSize:(NSSize) __unused oldSize {
   CGFloat dividerThickness = [sender dividerThickness];
-  NSRect topRect  = [[sender subviews][0] frame];
-  NSRect bottomRect = [[sender subviews][1] frame];
+  NSRect topRect  = [[[sender subviews] objectAtIndex:0] frame];
+  NSRect bottomRect = [[[sender subviews] objectAtIndex:1] frame];
   NSRect newFrame  = [sender frame];
   
   topRect.size.height = newFrame.size.height - bottomRect.size.height - dividerThickness;
@@ -673,8 +640,8 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   bottomRect.size.width = newFrame.size.width;
   bottomRect.origin.y = topRect.size.height + dividerThickness;
   
-  [[sender subviews][0] setFrame:topRect];
-  [[sender subviews][1] setFrame:bottomRect];
+  [[[sender subviews] objectAtIndex:0] setFrame:topRect];
+  [[[sender subviews] objectAtIndex:1] setFrame:bottomRect];
 }
 
 
@@ -682,7 +649,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
 
 - (void)messageCellView:(BITFeedbackMessageCellView *)messaggeCellView clickOnButton:(NSButton *)button withAttachment:(BITFeedbackMessageAttachment *)attachment {
   self.previewAttachment = attachment;
-
+  
   NSInteger index = [self.feedbackTableView rowForView:messaggeCellView];
   NSRect thumbnailRect = [self.feedbackTableView frameOfCellAtColumn:0 row:index];
   thumbnailRect.origin.x += button.frame.origin.x;
@@ -695,7 +662,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
 
 #pragma mark - Quick Look panel support
 
-- (IBAction)togglePreviewPanel:(id)sender {
+- (IBAction)togglePreviewPanel:(id) __unused sender {
   if ([QLPreviewPanel sharedPreviewPanelExists] && [[QLPreviewPanel sharedPreviewPanel] isVisible]) {
     [[QLPreviewPanel sharedPreviewPanel] orderOut:nil];
   } else {
@@ -703,63 +670,55 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   }
 }
 
-- (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel *)panel {
+- (BOOL)acceptsPreviewPanelControl:(QLPreviewPanel *) __unused panel {
   return YES;
 }
 
 - (void)beginPreviewPanelControl:(QLPreviewPanel *)panel {
-  _previewPanel = panel;
+  self.previewPanel = panel;
   panel.delegate = self;
   panel.dataSource = self;
 }
 
-- (void)endPreviewPanelControl:(QLPreviewPanel *)panel {
-  _previewPanel = nil;
+- (void)endPreviewPanelControl:(QLPreviewPanel *) __unused panel {
+  self.previewPanel = nil;
 }
 
 
 #pragma mark - QLPreviewPanelDataSource
 
-- (NSInteger)numberOfPreviewItemsInPreviewPanel:(QLPreviewPanel *)panel {
+- (NSInteger)numberOfPreviewItemsInPreviewPanel:(QLPreviewPanel *) __unused panel {
   return 1;
 }
 
-- (id <QLPreviewItem>)previewPanel:(QLPreviewPanel *)panel previewItemAtIndex:(NSInteger)index {
+- (id <QLPreviewItem>)previewPanel:(QLPreviewPanel *)panel previewItemAtIndex:(NSInteger) __unused index {
   if (self.previewAttachment.needsLoadingFromURL && !self.previewAttachment.isLoading) {
     __weak QLPreviewPanel* blockPanel = panel;
     
     self.previewAttachment.isLoading = YES;
-    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:self.previewAttachment.sourceURL]];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:(NSURL *)[NSURL URLWithString:self.previewAttachment.sourceURL]];
     
     __weak typeof (self) weakSelf = self;
-    id nsurlsessionClass = NSClassFromString(@"NSURLSessionDataTask");
-    if (nsurlsessionClass) {
       NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
-      NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
+      __block NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
       
       NSURLSessionDataTask *task = [session dataTaskWithRequest:request
-                                              completionHandler: ^(NSData *data, NSURLResponse *response, NSError *error) {
+                                              completionHandler: ^(NSData *data, NSURLResponse * __unused response, NSError * __unused error) {
                                                 dispatch_async(dispatch_get_main_queue(), ^{
                                                   typeof (self) strongSelf = weakSelf;
+                                                  
+                                                  [session finishTasksAndInvalidate];
+                                                  
                                                   [strongSelf previewPanel:blockPanel updateAttachment:strongSelf.previewAttachment data:data];
                                                 });
                                               }];
       [task resume];
-    }else{
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-      [NSURLConnection sendAsynchronousRequest:request queue:self.thumbnailQueue completionHandler:^(NSURLResponse *response, NSData *responseData, NSError *err) {
-#pragma clang diagnostic pop
-        typeof (self) strongSelf = weakSelf;
-        [strongSelf previewPanel:blockPanel updateAttachment:strongSelf.previewAttachment data:responseData];
-      }];
-    }
   }
   
   return self.previewAttachment;
 }
 
-- (void)previewPanel:(QLPreviewPanel *)panel updateAttachment:(BITFeedbackMessageAttachment *)attachment data:(NSData *)data {
+- (void)previewPanel:(QLPreviewPanel *)panel updateAttachment:(BITFeedbackMessageAttachment *) __unused attachment data:(NSData *)data {
   self.previewAttachment.isLoading = NO;
   if (data.length) {
     [self.previewAttachment replaceData:data];
@@ -774,7 +733,7 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
 
 #pragma mark - QLPreviewPanelDelegate
 
-- (BOOL)previewPanel:(QLPreviewPanel *)panel handleEvent:(NSEvent *)event {
+- (BOOL)previewPanel:(QLPreviewPanel *) __unused panel handleEvent:(NSEvent *)event {
   // redirect all key down events to the table view
   if ([event type] == NSKeyDown) {
     [self.feedbackTableView keyDown:event];
@@ -783,12 +742,12 @@ NSString * const BITFeedbackMessageDateValueTransformerName = @"BITFeedbackMessa
   return NO;
 }
 
-- (NSRect)previewPanel:(QLPreviewPanel *)panel sourceFrameOnScreenForPreviewItem:(id <QLPreviewItem>)item {
+- (NSRect)previewPanel:(QLPreviewPanel *) __unused panel sourceFrameOnScreenForPreviewItem:(id <QLPreviewItem>) __unused item {
   BOOL memberOfComposeAttachments = [self.attachments containsObject:self.previewAttachment];
   NSTableView *relevantTableView = (memberOfComposeAttachments) ? self.feedbackAttachmentsTableView : self.feedbackTableView;
   
   NSRect visibleRect = [relevantTableView visibleRect];
-
+  
   if (!NSIntersectsRect(visibleRect, self.previewThumbnailRect)) {
     return NSZeroRect;
   }

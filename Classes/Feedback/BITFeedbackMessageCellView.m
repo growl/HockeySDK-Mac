@@ -1,35 +1,7 @@
-/*
- * Author: Andreas Linde <mail@andreaslinde.de>
- *
- * Copyright (c) 2014 HockeyApp, Bit Stadium GmbH.
- * All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following
- * conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
- */
+#import <tgmath.h>
 
 #import "BITFeedbackMessageCellView.h"
-
 #import "BITFeedbackMessageCellViewDelegate.h"
-
 #import "BITFeedbackMessage.h"
 #import "BITFeedbackMessageAttachment.h"
 
@@ -37,22 +9,11 @@
 #import "BITSDKColoredView.h"
 #import "BITActivityIndicatorButton.h"
 
-
-#define BACKGROUNDCOLOR_DEFAULT BIT_RGBCOLOR(245, 245, 245)
-#define BACKGROUNDCOLOR_ALTERNATE BIT_RGBCOLOR(235, 235, 235)
-
-#define TEXTCOLOR_TITLE BIT_RGBCOLOR(75, 75, 75)
-
-#define TEXTCOLOR_DEFAULT BIT_RGBCOLOR(25, 25, 25)
-#define TEXTCOLOR_PENDING BIT_RGBCOLOR(75, 75, 75)
-
 #define TEXT_FONTSIZE 13
-#define DATE_FONTSIZE 11
 
 #define FRAME_SIDE_BORDER 10
 #define FRAME_TOP_BORDER 23
 #define FRAME_BOTTOM_BORDER 23
-#define FRAME_LEFT_RESPONSE_BORDER 20
 
 #define LABEL_TEXT_Y 17
 
@@ -60,6 +21,8 @@
 @interface BITFeedbackMessageCellView()
 
 @property (nonatomic, unsafe_unretained) id<BITFeedbackMessageCellViewDelegate> bitDelegate;
+
+@property (nonatomic) NSUInteger attachmentsAdded;
 
 @end
 
@@ -69,8 +32,6 @@
   NSDateFormatter *_timeFormatter;
 
   NSInteger _row;
-  
-  NSInteger _attachmentsAdded;
 }
 
 
@@ -135,7 +96,7 @@
 - (void)updateAttachment:(NSNotification *)notification {
   if (!notification.userInfo) return;
   NSDictionary *dict = notification.userInfo;
-  BITFeedbackMessageAttachment *attachment = dict[kBITFeedbackAttachmentLoadedKey];
+  BITFeedbackMessageAttachment *attachment = [dict objectForKey:kBITFeedbackAttachmentLoadedKey];
   if (!attachment) return;
   
   if (![self.message.attachments containsObject:attachment]) return;
@@ -164,24 +125,25 @@
   
   self.messageTextField.stringValue = message.text;
   NSValueTransformer *valueTransformer = [NSValueTransformer valueTransformerForName:@"BITFeedbackMessageDateValueTransformer"];
-  self.dateTextField.stringValue = [valueTransformer transformedValue:message];
+  self.dateTextField.stringValue = [valueTransformer transformedValue:message] ?: @"";
   
   [self setNeedsDisplay:YES];
 }
 
 - (void)updateAttachmentViews {
-  _attachmentsAdded = 0;
+  self.attachmentsAdded = 0;
   
   NSArray *previewableAttachments = self.message.previewableAttachments;
-
-  if (_attachmentsAdded == [previewableAttachments count]) return;
+  [self clearAllImageViews];
+  
+  if (self.attachmentsAdded == [previewableAttachments count]) return;
   
   if (previewableAttachments) {
     CGFloat baseOffsetOfText = CGRectGetMaxY(self.dateTextField.frame) + 10;
     
     NSInteger i = 0;
     
-    CGFloat attachmentsPerRow = floorf(self.frame.size.width / (FRAME_SIDE_BORDER + BIT_ATTACHMENT_THUMBNAIL_LENGTH));
+    CGFloat attachmentsPerRow = floor(self.frame.size.width / (FRAME_SIDE_BORDER + BIT_ATTACHMENT_THUMBNAIL_LENGTH));
     
     for (BITFeedbackMessageAttachment *attachment in self.message.attachments) {
       attachment.identifier = [NSNumber numberWithInteger:i];
@@ -220,7 +182,7 @@
       
       [self addSubview:imageButton];
       
-      _attachmentsAdded++;
+      self.attachmentsAdded++;
       
       i++;
     }
@@ -240,6 +202,15 @@
   [super drawRect:dirtyRect];
 }
 
+- (void)clearAllImageViews{
+  
+  // Since we simultaneously loop over and mutate the view's subviews array we need to go backwards
+  for (NSView *subview in [self.subviews reverseObjectEnumerator]) {
+    if ([subview isKindOfClass:[BITActivityIndicatorButton class]]) {
+      [subview removeFromSuperview];
+    }
+  }
+}
 
 + (NSRect)messageUsedRect:(BITFeedbackMessage *)message tableViewWidth:(CGFloat)width {
   CGRect maxMessageHeightFrame = CGRectMake(0, 0, width - FRAME_SIDE_BORDER * 2 - 4, CGFLOAT_MAX);
@@ -258,7 +229,7 @@
   (void)[layoutManager glyphRangeForTextContainer:textContainer];
   NSRect aRect = [layoutManager usedRectForTextContainer:textContainer];
   
-  CGFloat attachmentsPerRow = floorf(width / (FRAME_SIDE_BORDER + BIT_ATTACHMENT_THUMBNAIL_LENGTH));
+  CGFloat attachmentsPerRow = floor(width / (FRAME_SIDE_BORDER + BIT_ATTACHMENT_THUMBNAIL_LENGTH));
   CGFloat attachmentHeight = BIT_ATTACHMENT_THUMBNAIL_LENGTH * ceil([message previewableAttachments].count / attachmentsPerRow);
   
   if (attachmentHeight > 0) attachmentHeight += 10;

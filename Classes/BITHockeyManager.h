@@ -1,30 +1,9 @@
-// 
-//  Author: Andreas Linde <mail@andreaslinde.de>
-// 
-//  Copyright (c) 2012-2014 HockeyApp, Bit Stadium GmbH. All rights reserved.
-//  See LICENSE.txt for author information.
-//
-//  Permission is hereby granted, free of charge, to any person obtaining a copy
-//  of this software and associated documentation files (the "Software"), to deal
-//  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//  copies of the Software, and to permit persons to whom the Software is
-//  furnished to do so, subject to the following conditions:
-//
-//  The above copyright notice and this permission notice shall be included in
-//  all copies or substantial portions of the Software.
-//
-//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-//  THE SOFTWARE.
-
 @class BITCrashManager;
 @class BITFeedbackManager;
+@class BITMetricsManager;
 @protocol BITHockeyManagerDelegate;
+
+#import "HockeySDK.h"
 
 /**
  The HockeySDK manager. Responsible for setup and management of all components
@@ -136,7 +115,7 @@
  * @see BITHockeyManagerDelegate
  * @see BITCrashManagerDelegate
  */
-@property (nonatomic, unsafe_unretained) id<BITHockeyManagerDelegate> delegate;
+@property (nonatomic, weak) id<BITHockeyManagerDelegate> delegate;
 
 
 ///-----------------------------------------------------------------------------
@@ -149,8 +128,10 @@
  *
  * By default this is set to the HockeyApp servers and there rarely should be a
  * need to modify that.
+ * Please be aware that the URL for `BITMetricsManager` needs to be set separately
+ * as this class uses a different endpoint!
  */
-@property (nonatomic, strong) NSString *serverURL;
+@property (nonatomic, copy) NSString *serverURL;
 
 /**
  * Reference to the initialized BITCrashManager module
@@ -203,6 +184,27 @@
  @see feedbackManager
  */
 @property (nonatomic, getter = isFeedbackManagerDisabled) BOOL disableFeedbackManager;
+
+
+/**
+ Reference to the initialized BITMetricsManager module
+ 
+ Returns the BITMetricsManager instance initialized by BITHockeyManager
+ */
+@property (nonatomic, strong, readonly) BITMetricsManager *metricsManager;
+
+/**
+ Flag the determines whether the BITMetricsManager should be disabled
+ 
+ If this flag is enabled, then sending metrics data such as sessions and users
+ will be turned off!
+ 
+ Please note that the BITMetricsManager instance will be initialized anyway!
+  
+ *Default*: _NO_
+ @see metricsManager
+ */
+@property (nonatomic, getter = isMetricsManagerDisabled) BOOL disableMetricsManager;
 
 
 ///-----------------------------------------------------------------------------
@@ -296,15 +298,49 @@
 ///-----------------------------------------------------------------------------
 
 /**
- * Flag that determines whether additional logging output should be generated
- * by the manager and all modules.
- *
- * This is ignored if the app is running in the App Store and reverts to the
- * default value in that case.
- *
- * *Default*: _NO_
+ This property is used indicate the amount of verboseness and severity for which
+ you want to see log messages in the console.
  */
-@property (nonatomic, assign, getter=isDebugLogEnabled) BOOL debugLogEnabled;
+@property (nonatomic, assign) BITLogLevel logLevel;
+
+/**
+ Flag that determines whether additional logging output should be generated
+ by the manager and all modules.
+ 
+ This is ignored if the app is running in the App Store and reverts to the
+ default value in that case.
+ 
+ @warning This property needs to be set before calling `startManager`
+ 
+ *Default*: _NO_
+ */
+@property (nonatomic, assign, getter=isDebugLogEnabled) BOOL debugLogEnabled DEPRECATED_MSG_ATTRIBUTE("Use logLevel instead!");
+
+/**
+ Set a custom block that handles all the log messages that are emitted from the SDK.
+ 
+ You can use this to reroute the messages that would normally be logged by `NSLog();`
+ to your own custom logging framework.
+ 
+ An example of how to do this with NSLogger:
+ 
+ ```
+ [[BITHockeyManager sharedHockeyManager] setLogHandler:^(BITLogMessageProvider messageProvider, BITLogLevel logLevel, const char *file, const char *function, uint line) {
+ LogMessageRawF(file, (int)line, function, @"HockeySDK", (int)logLevel-1, messageProvider());
+ }];
+ ```
+ 
+ or with CocoaLumberjack:
+ 
+ ```
+ [[BITHockeyManager sharedHockeyManager] setLogHandler:^(BITLogMessageProvider messageProvider, BITLogLevel logLevel, const char *file, const char *function, uint line) {
+ [DDLog log:YES message:messageProvider() level:ddLogLevel flag:(DDLogFlag)(1 << (logLevel-1)) context:<#CocoaLumberjackContext#> file:file function:function line:line tag:nil];
+ }];
+ ```
+ 
+ @param logHandler The block of type BITLogHandler that will process all logged messages.
+ */
+- (void)setLogHandler:(BITLogHandler)logHandler;
 
 
 ///-----------------------------------------------------------------------------
